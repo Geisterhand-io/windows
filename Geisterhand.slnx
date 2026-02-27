@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Geisterhand.Cli/Geisterhand.Cli.csproj" />
+    <Project Path="src/Geisterhand.Core/Geisterhand.Core.csproj" />
+    <Project Path="src/Geisterhand.Tray/Geisterhand.Tray.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Geisterhand.Tests/Geisterhand.Tests.csproj" />
+  </Folder>
+</Solution>
