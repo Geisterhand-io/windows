@@ -6,6 +6,7 @@ var rootCommand = new RootCommand("Geisterhand — Screen automation tool for Wi
 rootCommand.Add(StatusCommand.Create());
 rootCommand.Add(ScreenshotCommand.Create());
 rootCommand.Add(ClickCommand.Create());
+rootCommand.Add(ClickWindowCommand.Create());
 rootCommand.Add(TypeCommand.Create());
 rootCommand.Add(KeyCommand.Create());
 rootCommand.Add(ScrollCommand.Create());

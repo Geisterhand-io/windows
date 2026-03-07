@@ -177,6 +177,52 @@ internal static partial class User32
 
     public const uint PW_RENDERFULLCONTENT = 0x00000002;
 
+    [LibraryImport("user32.dll", SetLastError = true)]
+    public static partial IntPtr ChildWindowFromPoint(IntPtr hWndParent, POINT point);
+
+    [LibraryImport("user32.dll", SetLastError = true)]
+    public static partial IntPtr RealChildWindowFromPoint(IntPtr hWndParent, POINT point);
+
+    [LibraryImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool ScreenToClient(IntPtr hWnd, ref POINT lpPoint);
+
+    [LibraryImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool ClientToScreen(IntPtr hWnd, ref POINT lpPoint);
+
+    [LibraryImport("user32.dll", SetLastError = true)]
+    public static partial IntPtr SendMessageW(IntPtr hWnd, uint Msg, nint wParam, nint lParam);
+
+    [LibraryImport("user32.dll", SetLastError = true)]
+    public static partial IntPtr GetParent(IntPtr hWnd);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "GetClassNameW", CharSet = System.Runtime.InteropServices.CharSet.Unicode, SetLastError = true)]
+    private static extern int GetClassNameDll(IntPtr hWnd, char[] lpClassName, int nMaxCount);
+
+    [LibraryImport("user32.dll", SetLastError = true)]
+    public static partial int GetDlgCtrlID(IntPtr hWnd);
+
+    public delegate bool EnumChildProc(IntPtr hWnd, IntPtr lParam);
+
+    [LibraryImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool EnumChildWindows(IntPtr hWndParent, EnumChildProc lpEnumFunc, IntPtr lParam);
+
+    [LibraryImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool SetProcessDPIAware();
+
+    public const uint WM_COMMAND = 0x0111;
+    public const int BN_CLICKED = 0;
+
+    public static string GetClassName(IntPtr hWnd)
+    {
+        var buffer = new char[256];
+        int len = GetClassNameDll(hWnd, buffer, buffer.Length);
+        return len > 0 ? new string(buffer, 0, len) : string.Empty;
+    }
+
     [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "GetWindowTextW", CharSet = System.Runtime.InteropServices.CharSet.Unicode, SetLastError = true)]
     private static extern int GetWindowTextDll(IntPtr hWnd, char[] lpString, int nMaxCount);
 
