@@ -21,6 +21,7 @@ public class GeisterhandServer
     private readonly int _port;
     private readonly int? _targetPid;
     private readonly string? _targetAppName;
+    private readonly bool _verbose;
     private WebApplication? _app;
 
     public static readonly JsonSerializerOptions JsonOptions = new()
@@ -30,11 +31,12 @@ public class GeisterhandServer
         PropertyNameCaseInsensitive = true
     };
 
-    public GeisterhandServer(int port = 7676, int? targetPid = null, string? targetAppName = null)
+    public GeisterhandServer(int port = 7676, int? targetPid = null, string? targetAppName = null, bool verbose = false)
     {
         _port = port;
         _targetPid = targetPid;
         _targetAppName = targetAppName;
+        _verbose = verbose;
     }
 
     public int Port => _port;
@@ -46,7 +48,7 @@ public class GeisterhandServer
         {
             options.ListenLocalhost(_port);
         });
-        builder.Logging.SetMinimumLevel(LogLevel.Warning);
+        builder.Logging.SetMinimumLevel(_verbose ? LogLevel.Information : LogLevel.Warning);
 
         // Register services
         builder.Services.AddSingleton(new KeyboardController());
@@ -54,6 +56,10 @@ public class GeisterhandServer
         builder.Services.AddSingleton(new ScreenCaptureService());
         builder.Services.AddSingleton(new AccessibilityService());
         builder.Services.AddSingleton(new MenuService());
+        builder.Services.AddSingleton(new ClipboardService());
+        builder.Services.AddSingleton(new WindowManager());
+        builder.Services.AddSingleton(new MonitorService());
+        builder.Services.AddSingleton(new ImageDiffService());
         builder.Services.AddSingleton(new ServerContext(_targetPid, _targetAppName));
 
         _app = builder.Build();
@@ -74,6 +80,20 @@ public class GeisterhandServer
             }
         });
 
+        // Request logging middleware (when verbose)
+        if (_verbose)
+        {
+            var logger = _app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Geisterhand");
+            _app.Use(async (context, next) =>
+            {
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                logger.LogInformation("{Method} {Path}", context.Request.Method, context.Request.Path);
+                await next(context);
+                logger.LogInformation("{Method} {Path} -> {Status} ({ElapsedMs}ms)",
+                    context.Request.Method, context.Request.Path, context.Response.StatusCode, sw.ElapsedMilliseconds);
+            });
+        }
+
         // Register routes
         StatusRoute.Map(_app);
         ScreenshotRoute.Map(_app);
@@ -84,6 +104,12 @@ public class GeisterhandServer
         WaitRoute.Map(_app);
         AccessibilityRoute.Map(_app);
         MenuRoute.Map(_app);
+        MouseMoveRoute.Map(_app);
+        DragRoute.Map(_app);
+        WindowRoute.Map(_app);
+        ClipboardRoute.Map(_app);
+        MonitorRoute.Map(_app);
+        ScreenshotDiffRoute.Map(_app);
 
         await _app.StartAsync(cancellationToken);
     }

@@ -176,4 +176,18 @@ public class KeyboardController
         }
         return (nint)lParam;
     }
+
+    /// <summary>
+    /// Get the state of a key (pressed and toggled).
+    /// </summary>
+    public (bool pressed, bool toggled) GetKeyState(string keyName)
+    {
+        if (!KeyCodeMap.TryGetVirtualKey(keyName, out ushort vk))
+            throw new ArgumentException($"Unknown key: {keyName}");
+
+        short state = User32.GetKeyState(vk);
+        bool pressed = (state & 0x8000) != 0;
+        bool toggled = (state & 0x0001) != 0;
+        return (pressed, toggled);
+    }
 }

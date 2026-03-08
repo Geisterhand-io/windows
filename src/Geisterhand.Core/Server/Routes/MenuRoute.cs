@@ -68,5 +68,51 @@ public static class MenuRoute
             );
             return Results.Json(response, GeisterhandServer.JsonOptions);
         });
+
+        // POST /menu/context — right-click and inspect context menu
+        app.MapPost("/menu/context", async (HttpContext ctx) =>
+        {
+            var request = await ctx.Request.ReadFromJsonAsync<ContextMenuRequest>(GeisterhandServer.JsonOptions);
+            if (request == null)
+                return Results.Json(new ErrorResponse("invalid_request", "Missing request body"), GeisterhandServer.JsonOptions, statusCode: 400);
+
+            var menuService = ctx.RequestServices.GetRequiredService<MenuService>();
+            var axService = ctx.RequestServices.GetRequiredService<AccessibilityService>();
+            var capture = ctx.RequestServices.GetRequiredService<ScreenCaptureService>();
+            var mouse = ctx.RequestServices.GetRequiredService<Input.MouseController>();
+            var serverCtx = ctx.RequestServices.GetRequiredService<ServerContext>();
+
+            string? appName = request.AppName ?? serverCtx.TargetAppName;
+            int? pid = request.Pid ?? serverCtx.TargetPid;
+
+            var hWnd = capture.ResolveWindow(appName, pid);
+            capture.BringWindowToFront(hWnd);
+            await Task.Delay(50);
+
+            // Right-click at coordinates
+            mouse.Click(request.X, request.Y, "right", "single");
+            await Task.Delay(300); // Wait for context menu to appear
+
+            // Find the context menu via UIA
+            var desktop = System.Windows.Automation.AutomationElement.RootElement;
+            var menuCondition = new System.Windows.Automation.PropertyCondition(
+                System.Windows.Automation.AutomationElement.ControlTypeProperty,
+                System.Windows.Automation.ControlType.Menu);
+
+            var contextMenu = desktop.FindFirst(System.Windows.Automation.TreeScope.Children, menuCondition);
+
+            if (contextMenu == null)
+            {
+                return Results.Json(new ContextMenuResponse([]), GeisterhandServer.JsonOptions);
+            }
+
+            var items = menuService.GetMenuItems(contextMenu);
+
+            // Press Escape to dismiss
+            Native.User32.PostMessageW(hWnd, Native.User32.WM_KEYDOWN, 0x1B, 0);
+            Native.User32.PostMessageW(hWnd, Native.User32.WM_KEYUP, 0x1B, 0);
+
+            return Results.Json(new ContextMenuResponse(items), GeisterhandServer.JsonOptions);
+        });
     }
 }

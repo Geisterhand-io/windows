@@ -9,7 +9,13 @@ public record WindowInfo(
     string Title,
     int ProcessId,
     string ProcessName,
-    string? ExecutablePath
+    string? ExecutablePath,
+    bool IsMaximized = false,
+    bool IsMinimized = false,
+    int X = 0,
+    int Y = 0,
+    int Width = 0,
+    int Height = 0
 );
 
 public record ElementInfo(

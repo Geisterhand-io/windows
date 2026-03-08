@@ -171,12 +171,19 @@ public class ScreenCaptureService
                 string? exePath = null;
                 try { exePath = proc.MainModule?.FileName; } catch { }
 
+                User32.GetWindowRect(hWnd, out var rect);
                 windows.Add(new WindowInfo(
                     Handle: hWnd,
                     Title: title,
                     ProcessId: (int)pid,
                     ProcessName: proc.ProcessName,
-                    ExecutablePath: exePath
+                    ExecutablePath: exePath,
+                    IsMaximized: User32.IsZoomed(hWnd),
+                    IsMinimized: User32.IsIconic(hWnd),
+                    X: rect.Left,
+                    Y: rect.Top,
+                    Width: rect.Right - rect.Left,
+                    Height: rect.Bottom - rect.Top
                 ));
             }
             catch { }

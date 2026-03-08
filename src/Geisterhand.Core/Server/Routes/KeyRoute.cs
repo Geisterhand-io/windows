@@ -41,5 +41,24 @@ public static class KeyRoute
             );
             return Results.Json(response, GeisterhandServer.JsonOptions);
         });
+
+        // GET /key-state?key=capslock
+        app.MapGet("/key-state", (HttpContext ctx) =>
+        {
+            string? keyName = ctx.Request.Query["key"].FirstOrDefault();
+            if (string.IsNullOrEmpty(keyName))
+                return Results.Json(new ErrorResponse("invalid_request", "key parameter required"), GeisterhandServer.JsonOptions, statusCode: 400);
+
+            var keyboard = ctx.RequestServices.GetRequiredService<KeyboardController>();
+            try
+            {
+                var (pressed, toggled) = keyboard.GetKeyState(keyName);
+                return Results.Json(new KeyStateResponse(keyName, pressed, toggled), GeisterhandServer.JsonOptions);
+            }
+            catch (ArgumentException ex)
+            {
+                return Results.Json(new ErrorResponse("invalid_request", ex.Message), GeisterhandServer.JsonOptions, statusCode: 400);
+            }
+        });
     }
 }
